@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>十字キーコントローラー</title>
+    <style>
+        /* 全体のコンテナのスタイル */
+        .d-pad-container {
+            display: grid;
+            grid-template-columns: repeat(3, 80px); /* 3列のグリッドを作成 */
+            grid-template-rows: repeat(3, 80px);    /* 3行のグリッドを作成 */
+            gap: 5px; /* ボタン間の隙間 */
+            margin: 50px;
+        }
+
+        /* ボタン共通のスタイル */
+        .d-pad-button {
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #555;
+            border-radius: 10px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none; /* テキスト選択を無効化 */
+        }
+
+        /* ボタンが押された時のスタイル */
+        .d-pad-button:active {
+            background-color: #ccc;
+            transform: scale(0.95);
+        }
+
+        /* 各ボタンをグリッドの特定の位置に配置 */
+        #btn-up { grid-area: 1 / 2; }    /* 1行目、2列目 */
+        #btn-left { grid-area: 2 / 1; }  /* 2行目、1列目 */
+        #btn-stop { grid-area: 2 / 2; }  /* 2行目、2列目 */
+        #btn-right { grid-area: 2 / 3; } /* 2行目、3列目 */
+        #btn-down { grid-area: 3 / 2; }  /* 3行目、2列目 */
+    </style>
+</head>
+<body>
+
+    <h1>十字キーコントローラー</h1>
+
+    <div class="d-pad-container">
+        <button class="d-pad-button" id="btn-up">↑</button>
+        <button class="d-pad-button" id="btn-left">←</button>
+        <button class="d-pad-button" id="btn-stop">S</button>
+        <button class="d-pad-button" id="btn-right">→</button>
+        <button class="d-pad-button" id="btn-down">↓</button>
+    </div>
+
+    <p>ステータス: <span id="status">待機中...</span></p>
+
+    <script>
+        // 送信先サーバーのベースURL
+        const BASE_URL = 'http://192.168.50.105:8800';
+
+        // 各ボタンに対応するパスを定義
+        const actions = {
+            'btn-up': '/fw',    // 前進 (Forward)
+            'btn-down': '/bk',  // 後退 (Backward)
+            'btn-left': '/lt',  // 左折 (Left)
+            'btn-right': '/rt', // 右折 (Right)
+            'btn-stop': '/st'   // 停止 (Stop)
+        };
+
+        // ステータス表示用の要素を取得
+        const statusElement = document.getElementById('status');
+
+        /**
+         * GETリクエストを送信する関数
+         * @param {string} path - 送信するパス (例: '/Fw')
+         */
+        async function sendRequest(path) {
+            const url = BASE_URL + path;
+            statusElement.textContent = `リクエスト送信中: ${url}`;
+            
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    statusElement.textContent = `成功: ${path} を送信しました。`;
+                    console.log(`Success: Sent GET request to ${url}`);
+                } else {
+                    statusElement.textContent = `エラー: サーバーがエラーを返しました (Status: ${response.status})。`;
+                    console.error(`Error: Server responded with status ${response.status}`);
+                }
+            } catch (error) {
+                statusElement.textContent = `エラー: サーバーに接続できませんでした。`;
+                console.error('Fetch error:', error);
+            }
+        }
+
+        // すべてのボタンにクリックイベントを追加
+        for (const id in actions) {
+            const button = document.getElementById(id);
+            if (button) {
+                button.addEventListener('click', () => {
+                    sendRequest(actions[id]);
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>
